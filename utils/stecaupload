@@ -1,0 +1,18 @@
+#!/bin/sh
+P=`nc localhost 54321 | cut -d" " -f1`
+E=`nc localhost 54321 | cut -d" " -f2`
+
+DATE=`date +%Y%m%d`
+TIME=`date +%H:%M`
+
+echo "d: $DATE"
+echo "t: $TIME"
+echo "v1: $E"
+echo "v2: $P"
+
+curl -H "X-Pvoutput-Apikey: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" \
+     -H "X-Pvoutput-SystemId: xxxxx" \
+     -d "d=$DATE" -d "t=$TIME" -d "v1=$E" -d "v2=$P" \
+     -o /dev/null \
+     -s \
+     http://pvoutput.org/service/r2/addstatus.jsp

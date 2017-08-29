@@ -1,0 +1,46 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          stecapower
+# Required-Start:    $all
+# Required-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:
+# Short-Description: Run stecapower
+### END INIT INFO
+
+do_start() {
+  R=`pgrep stecapower`
+  if [ -z "$R" ]; then
+    /usr/local/sbin/stecapower
+  else
+    echo "Allready running"
+  fi
+}
+
+do_stop() {
+  pkill stecapower
+}
+
+do_reload() {
+  pkill -hup stecapower
+}
+
+case "$1" in
+    start)
+        do_start
+        ;;
+    restart)
+        do_stop
+        do_start
+        ;;
+    reload)
+        do_reload
+        ;;
+    stop)
+        do_stop
+        ;;
+    *)
+        echo "Usage: $0 start|stop|restart|reload" >&2
+        exit 3
+        ;;
+esac
