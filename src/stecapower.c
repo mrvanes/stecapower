@@ -40,6 +40,10 @@ void log_message(char *filename, char *message) {
   fclose(logfile);
 }
 
+/* stecapower cares about SIGHUP and SIGTERM.
+   SIGHUP will reset globalCounter so that we only measure day totals
+   SIGTERM will save globalCounter to file so we don't loose day totals on restart
+*/
 void signal_handler(int sig) {
   switch(sig) {
   case SIGHUP:
@@ -58,6 +62,7 @@ void signal_handler(int sig) {
   }
 }
 
+/* Calculate power based on current FC frequency derived from time between last two pulses */
 void timer_handler(int sig) {
   //log_message(logfilename, "Timer expired");
   if (globalCounter - globalCounterLast > 2) power = 10.0/tdelta;
@@ -65,8 +70,8 @@ void timer_handler(int sig) {
   globalCounterLast = globalCounter;
 }
 
-void myInterrupt(void) {
-  // Calculate tdelta since last pulse
+/* Calculate tdelta since last pulse */
+void interrupt_handler(void) {
   gettimeofday(&tv_now, NULL);
   now = tv_now.tv_sec + (1.0/1000000) * tv_now.tv_usec;
   tdelta = now - last;
@@ -74,6 +79,7 @@ void myInterrupt(void) {
   globalCounter++;
 }
 
+/* Fork ourselves to background and register power calculation timer */
 void daemonize() {
   int i,lfp;
   char str[10];
@@ -117,6 +123,7 @@ void daemonize() {
   signal(SIGALRM, timer_handler);
 }
 
+/* Create socket to connect for readout of measurements */
 int bindsocket(int *sock, int port) {
   int optval;
   size_t optlen;
@@ -141,7 +148,7 @@ int bindsocket(int *sock, int port) {
   return 0;
 }
 
-
+/* The main program */
 int main() {
   int result;
   int client_fd;
@@ -170,14 +177,14 @@ int main() {
   pullUpDnControl(0, PUD_DOWN);
 
   /* Setup interrupt handler */
-  if (wiringPiISR (0, INT_EDGE_FALLING, &myInterrupt) < 0)
+  if (wiringPiISR (0, INT_EDGE_FALLING, &interrupt_handler) < 0)
     log_message(logfilename, "Unable to setup ISR");
   
   /* Setup static vars */
   globalCounter = globalCounterLast = 0;
   tdelta = now = last = power =0;
 
-  /* Read pulse state */
+  /* Read pulsecounter from file if available */
   statefile = fopen(statefilename,"r");
   if (statefile) {
     log_message(logfilename, "Statefile found");
