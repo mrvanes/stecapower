@@ -70,7 +70,7 @@ void timer_handler(int sig) {
   globalCounterLast = globalCounter;
 }
 
-/* Calculate tdelta since last pulse */
+/* Calculate tdelta since last pulse, increase globalCounter by one */
 void interrupt_handler(void) {
   gettimeofday(&tv_now, NULL);
   now = tv_now.tv_sec + (1.0/1000000) * tv_now.tv_usec;
